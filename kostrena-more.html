@@ -90,6 +90,48 @@
   .icon-btn:hover { border-color: var(--accent); color: var(--accent-light); }
   .icon-btn:disabled { opacity: 0.5; cursor: default; }
 
+  /* ── Wave animation ────────────────────────────────────────── */
+
+  .wave-wrap {
+    position: relative;
+    height: 60px;
+    overflow: hidden;
+    margin: 20px -20px 0;
+  }
+
+  .wv {
+    position: absolute;
+    left: -50%;
+    width: 200%;
+    border-radius: 42%;
+  }
+
+  .wv1 {
+    height: 400px;
+    bottom: -342px;
+    background: rgba(56, 189, 248, 0.14);
+    animation: waveRoll 9s linear infinite;
+  }
+
+  .wv2 {
+    height: 400px;
+    bottom: -348px;
+    background: rgba(52, 211, 153, 0.09);
+    animation: waveRoll 12s linear infinite reverse;
+  }
+
+  .wv3 {
+    height: 400px;
+    bottom: -354px;
+    background: rgba(167, 139, 250, 0.06);
+    animation: waveRoll 16s linear infinite;
+  }
+
+  @keyframes waveRoll {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
   /* ── Grid ──────────────────────────────────────────────────── */
 
   .dashboard {
@@ -213,12 +255,67 @@
     border-radius: 8px;
   }
 
-  .wq-fallback a {
-    color: var(--accent-light);
-    text-decoration: none;
+  .wq-fallback a { color: var(--accent-light); text-decoration: none; }
+  .wq-fallback a:hover { text-decoration: underline; }
+
+  /* ── Sea temperature card ──────────────────────────────────── */
+
+  .sea-big {
+    font-size: 3.8rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: color 0.35s;
   }
 
-  .wq-fallback a:hover { text-decoration: underline; }
+  .sea-unit {
+    font-size: 1.6rem;
+    font-weight: 400;
+    vertical-align: super;
+    line-height: 1;
+  }
+
+  .sea-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: color 0.35s;
+  }
+
+  /* ── Wind speed card ───────────────────────────────────────── */
+
+  .wind-big {
+    font-size: 3.8rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: color 0.35s;
+  }
+
+  .wind-unit {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  .wind-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    transition: color 0.35s;
+  }
+
+  .wind-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+
+  .wind-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s;
+  }
 
   /* ── Hourly chart ──────────────────────────────────────────── */
 
@@ -331,9 +428,9 @@
     flex-shrink: 0;
   }
 
-  .notif-pill.on     { background: rgba(34,197,94,0.12);  color: var(--wq-excellent); }
+  .notif-pill.on     { background: rgba(34,197,94,0.12);   color: var(--wq-excellent); }
   .notif-pill.off    { background: rgba(100,116,139,0.12); color: var(--muted); }
-  .notif-pill.denied { background: rgba(239,68,68,0.12);  color: var(--wq-poor); }
+  .notif-pill.denied { background: rgba(239,68,68,0.12);   color: var(--wq-poor); }
 
   #notif-status {
     font-size: 0.78rem;
@@ -377,6 +474,17 @@
 
   footer a { color: var(--muted); }
 
+  .footer-credit {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .footer-credit strong {
+    color: var(--accent-light);
+    font-weight: 600;
+  }
+
   /* ── Responsive ────────────────────────────────────────────── */
 
   @media (max-width: 580px) {
@@ -384,6 +492,7 @@
     .card-wide { grid-column: 1; }
     h1 { font-size: 1.6rem; }
     .uv-big { font-size: 3.5rem; }
+    .sea-big, .wind-big { font-size: 3rem; }
   }
 </style>
 </head>
@@ -391,10 +500,15 @@
 
 <header>
   <h1>Kostrena</h1>
-  <p class="subtitle">UV Indeks &middot; Kakvo&cacute;a mora</p>
+  <p class="subtitle">UV Indeks &middot; Kakvo&cacute;a mora &middot; More &middot; Vjetar</p>
   <div class="meta-bar">
     <span id="last-update" class="loading-txt">U&269;itavanje podataka...</span>
     <button id="refresh-btn" class="icon-btn">&#8635; Osvje&382;i</button>
+  </div>
+  <div class="wave-wrap" aria-hidden="true">
+    <span class="wv wv1"></span>
+    <span class="wv wv2"></span>
+    <span class="wv wv3"></span>
   </div>
 </header>
 
@@ -432,6 +546,29 @@
     </div>
   </section>
 
+  <!-- Sea Temperature -->
+  <section class="card" id="card-sea">
+    <div class="card-label">Temperatura mora</div>
+    <div id="sea-content">
+      <div class="sea-big" id="sea-value">--<span class="sea-unit">&#176;C</span></div>
+      <div class="sea-label" id="sea-label">U&269;itavanje...</div>
+    </div>
+    <div id="sea-error" class="error-msg" hidden>Podaci o temperaturi mora nedostupni.</div>
+  </section>
+
+  <!-- Wind Speed -->
+  <section class="card" id="card-wind">
+    <div class="card-label">Ja&269;ina vjetra</div>
+    <div id="wind-content">
+      <div class="wind-big" id="wind-value">--<span class="wind-unit">km/h</span></div>
+      <div class="wind-label" id="wind-label">U&269;itavanje...</div>
+      <div class="wind-bar-track">
+        <div class="wind-bar-fill" id="wind-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="wind-error" class="error-msg" hidden>Podaci o vjetru nedostupni.</div>
+  </section>
+
   <!-- Hourly Chart -->
   <section class="card card-wide" id="card-hourly">
     <div class="card-label">UV danas &mdash; po satima</div>
@@ -465,8 +602,10 @@
 
 <footer>
   Podaci: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+  &middot; <a href="https://marine-api.open-meteo.com/" target="_blank" rel="noopener">Open-Meteo Marine</a>
   &middot; <a href="https://vrtlac.izor.hr/kakvoca/" target="_blank" rel="noopener">VRTLAC/IZOR</a>
   &middot; WHO smjernice za UV za&scaron;titu
+  <div class="footer-credit">Napravio <strong>Robert Andrijanić</strong></div>
 </footer>
 
 <script>
@@ -476,19 +615,26 @@
   const LON = 14.4977;
   const TZ  = 'Europe/Zagreb';
 
-  const UV_HIGH_THRESHOLD  = 5;
-  const REFRESH_INTERVAL   = 60 * 60 * 1000; // 60 min
-  const ALERT_COOLDOWN     = 55 * 60 * 1000; // 55 min
-  const LS_LAST_ALERT      = 'kostrena_last_alert';
+  const UV_HIGH_THRESHOLD = 5;
+  const REFRESH_INTERVAL  = 60 * 60 * 1000;
+  const ALERT_COOLDOWN    = 55 * 60 * 1000;
+  const LS_LAST_ALERT     = 'kostrena_last_alert';
 
   const OPEN_METEO_URL =
     'https://api.open-meteo.com/v1/forecast' +
     '?latitude='   + LAT +
     '&longitude='  + LON +
-    '&hourly=uv_index' +
+    '&hourly=uv_index,wind_speed_10m' +
     '&daily=uv_index_max' +
     '&timezone='   + encodeURIComponent(TZ) +
     '&forecast_days=7';
+
+  const MARINE_URL =
+    'https://marine-api.open-meteo.com/v1/marine' +
+    '?latitude='  + LAT +
+    '&longitude=' + LON +
+    '&hourly=sea_surface_temperature' +
+    '&timezone='  + encodeURIComponent(TZ);
 
   const IZOR_URL =
     'https://vrtlac.izor.hr/ords/kakvoca/kakvoca_detalji10?p_zup_id=6&p_jezik=eng';
@@ -501,16 +647,32 @@
     { max: Infinity, label: 'Ekstreman',  color: '#a855f7', advice: 'Ostanite unutra između 10 i 16 h!' },
   ];
 
+  const SEA_TEMP_BANDS = [
+    { max: 15,       label: 'Hladno',          color: '#60a5fa' },
+    { max: 20,       label: 'Osvježavajuće',    color: '#38bdf8' },
+    { max: 24,       label: 'Ugodna',           color: '#34d399' },
+    { max: 27,       label: 'Topla',            color: '#fbbf24' },
+    { max: Infinity, label: 'Vrlo topla',       color: '#f97316' },
+  ];
+
+  const WIND_BANDS = [
+    { max: 9,        label: 'Tišina / lahor',   color: '#22c55e' },
+    { max: 29,       label: 'Slab vjetar',       color: '#84cc16' },
+    { max: 49,       label: 'Umjeren vjetar',    color: '#eab308' },
+    { max: 74,       label: 'Jak vjetar',        color: '#f97316' },
+    { max: Infinity, label: 'Olujni vjetar',     color: '#ef4444' },
+  ];
+
   const WQ_MAP = {
-    'Izvrsna':     ['excellent', 'Izvrsna'],
-    'Excellent':   ['excellent', 'Izvrsna'],
-    'Dobra':       ['good',      'Dobra'],
-    'Good':        ['good',      'Dobra'],
-    'Prihvatljiva':['sufficient','Prihvatljiva'],
-    'Sufficient':  ['sufficient','Prihvatljiva'],
-    'Acceptable':  ['sufficient','Prihvatljiva'],
-    'Lošija':      ['poor',      'Loša'],
-    'Poor':        ['poor',      'Loša'],
+    'Izvrsna':      ['excellent', 'Izvrsna'],
+    'Excellent':    ['excellent', 'Izvrsna'],
+    'Dobra':        ['good',      'Dobra'],
+    'Good':         ['good',      'Dobra'],
+    'Prihvatljiva': ['sufficient','Prihvatljiva'],
+    'Sufficient':   ['sufficient','Prihvatljiva'],
+    'Acceptable':   ['sufficient','Prihvatljiva'],
+    'Lošija':       ['poor',      'Loša'],
+    'Poor':         ['poor',      'Loša'],
   };
 
   const DAYS_HR   = ['Ned','Pon','Uto','Sri','Čet','Pet','Sub'];
@@ -523,9 +685,9 @@
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  function getUVBand(v) {
-    return UV_BANDS.find(b => v <= b.max) || UV_BANDS[UV_BANDS.length - 1];
-  }
+  function getUVBand(v)   { return UV_BANDS.find(b => v <= b.max)       || UV_BANDS[UV_BANDS.length - 1]; }
+  function getSeaBand(v)  { return SEA_TEMP_BANDS.find(b => v <= b.max) || SEA_TEMP_BANDS[SEA_TEMP_BANDS.length - 1]; }
+  function getWindBand(v) { return WIND_BANDS.find(b => v <= b.max)     || WIND_BANDS[WIND_BANDS.length - 1]; }
 
   function localDateStr() {
     const d = new Date();
@@ -535,13 +697,26 @@
   }
 
   function isMonitoringSeason() {
-    const m = new Date().getMonth();
-    return m >= 4 && m <= 9;
+    return new Date().getMonth() >= 4 && new Date().getMonth() <= 9;
   }
 
   function formatShortDate(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
     return d.getDate() + '. ' + MONTHS_HR[d.getMonth()];
+  }
+
+  function getCurrentHourIndex(hourly) {
+    const today  = localDateStr();
+    const curKey = today + 'T' + String(new Date().getHours()).padStart(2, '0') + ':00';
+    let idx = hourly.time.indexOf(curKey);
+    if (idx === -1) {
+      var best = -1;
+      for (var i = 0; i < hourly.time.length; i++) {
+        if (hourly.time[i].startsWith(today) && hourly.time[i] <= curKey) best = i;
+      }
+      idx = best >= 0 ? best : 0;
+    }
+    return idx;
   }
 
   // ── Fetch ───────────────────────────────────────────────────────────────────
@@ -550,6 +725,19 @@
     const resp = await fetch(OPEN_METEO_URL);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     return resp.json();
+  }
+
+  async function fetchMarineData() {
+    try {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(function() { ctrl.abort(); }, 8000);
+      const resp  = await fetch(MARINE_URL, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!resp.ok) return null;
+      return resp.json();
+    } catch (e) {
+      return null;
+    }
   }
 
   async function fetchWaterQuality() {
@@ -561,22 +749,18 @@
       if (!resp.ok) return null;
       const data  = await resp.json();
       const items = Array.isArray(data) ? data : (data.items || []);
-
       const match = items.find(function(item) {
         return Object.values(item).some(function(v) {
           return typeof v === 'string' && v.toLowerCase().includes('kostrena');
         });
       });
       if (!match) return null;
-
-      // Scan for likely field names
       function pick(obj) {
         for (var i = 1; i < arguments.length; i++) {
           if (obj[arguments[i]] !== undefined) return obj[arguments[i]];
         }
         return null;
       }
-
       return {
         name:           pick(match, 'NAZIV_KUPALISCA', 'NAZIV_KUPALIŠTA', 'NAZIV', 'naziv', 'NAME') || 'Kostrena',
         classification: pick(match, 'KLASA', 'CLASS', 'klasa', 'QUALITY', 'quality'),
@@ -590,24 +774,8 @@
   // ── Render: UV ──────────────────────────────────────────────────────────────
 
   function renderCurrentUV(uvData) {
-    const today = localDateStr();
-    const now   = new Date();
-    const curH  = String(now.getHours()).padStart(2, '0');
-    const curKey = today + 'T' + curH + ':00';
-
-    const hourly = uvData.hourly;
-    let idx = hourly.time.indexOf(curKey);
-
-    if (idx === -1) {
-      // Fallback: latest past entry today
-      var best = -1;
-      for (var i = 0; i < hourly.time.length; i++) {
-        if (hourly.time[i].startsWith(today) && hourly.time[i] <= curKey) best = i;
-      }
-      idx = best >= 0 ? best : 0;
-    }
-
-    const value = hourly.uv_index[idx] != null ? hourly.uv_index[idx] : 0;
+    const idx   = getCurrentHourIndex(uvData.hourly);
+    const value = uvData.hourly.uv_index[idx] != null ? uvData.hourly.uv_index[idx] : 0;
     const band  = getUVBand(value);
 
     document.getElementById('uv-value').textContent      = value.toFixed(1);
@@ -622,6 +790,72 @@
     document.getElementById('uv-scale-marker').style.borderColor = band.color;
 
     return value;
+  }
+
+  // ── Render: Sea temperature ──────────────────────────────────────────────────
+
+  function renderSeaTemperature(marineData) {
+    const content = document.getElementById('sea-content');
+    const errorEl = document.getElementById('sea-error');
+
+    if (!marineData) {
+      content.hidden = true;
+      errorEl.hidden = false;
+      return;
+    }
+
+    const idx  = getCurrentHourIndex(marineData.hourly);
+    const temp = marineData.hourly.sea_surface_temperature[idx];
+
+    if (temp == null) {
+      content.hidden = true;
+      errorEl.hidden = false;
+      return;
+    }
+
+    content.hidden = false;
+    errorEl.hidden = true;
+
+    const band = getSeaBand(temp);
+    document.getElementById('sea-value').innerHTML   = temp.toFixed(1) + '<span class="sea-unit">&#176;C</span>';
+    document.getElementById('sea-value').style.color = band.color;
+    document.getElementById('sea-label').textContent  = band.label;
+    document.getElementById('sea-label').style.color  = band.color;
+  }
+
+  // ── Render: Wind speed ───────────────────────────────────────────────────────
+
+  function renderWindSpeed(uvData) {
+    const content = document.getElementById('wind-content');
+    const errorEl = document.getElementById('wind-error');
+
+    if (!uvData || !uvData.hourly.wind_speed_10m) {
+      content.hidden = true;
+      errorEl.hidden = false;
+      return;
+    }
+
+    const idx   = getCurrentHourIndex(uvData.hourly);
+    const speed = uvData.hourly.wind_speed_10m[idx];
+
+    if (speed == null) {
+      content.hidden = true;
+      errorEl.hidden = false;
+      return;
+    }
+
+    content.hidden = false;
+    errorEl.hidden = true;
+
+    const band = getWindBand(speed);
+    document.getElementById('wind-value').innerHTML   = Math.round(speed) + '<span class="wind-unit">km/h</span>';
+    document.getElementById('wind-value').style.color = band.color;
+    document.getElementById('wind-label').textContent  = band.label;
+    document.getElementById('wind-label').style.color  = band.color;
+
+    const bar = document.getElementById('wind-bar');
+    bar.style.width      = Math.max(Math.min((speed / 100) * 100, 100), 3) + '%';
+    bar.style.background = band.color;
   }
 
   // ── Render: Hourly chart ─────────────────────────────────────────────────────
@@ -639,7 +873,7 @@
     if (!todayData.length) return;
 
     const maxUV     = Math.max.apply(null, todayData.map(function(d) { return d.v; }).concat([1]));
-    const maxHeight = 110; // matches CSS height
+    const maxHeight = 110;
 
     const container = document.getElementById('chart-container');
     const labelsEl  = document.getElementById('chart-labels');
@@ -680,9 +914,9 @@
     row.innerHTML = '';
 
     daily.time.forEach(function(dateStr, i) {
-      const value = daily.uv_index_max[i] != null ? daily.uv_index_max[i] : 0;
-      const band  = getUVBand(value);
-      const d     = new Date(dateStr + 'T12:00:00');
+      const value   = daily.uv_index_max[i] != null ? daily.uv_index_max[i] : 0;
+      const band    = getUVBand(value);
+      const d       = new Date(dateStr + 'T12:00:00');
       const isToday = i === 0;
 
       const tile = document.createElement('div');
@@ -690,8 +924,8 @@
       if (isToday) tile.style.borderColor = band.color;
 
       tile.innerHTML =
-        '<div class="forecast-dow">' + (isToday ? 'Danas' : DAYS_HR[d.getDay()]) + '</div>' +
-        '<div class="forecast-date">' + formatShortDate(dateStr) + '</div>' +
+        '<div class="forecast-dow">'   + (isToday ? 'Danas' : DAYS_HR[d.getDay()]) + '</div>' +
+        '<div class="forecast-date">'  + formatShortDate(dateStr) + '</div>' +
         '<div class="forecast-uv" style="color:' + band.color + '">' + Math.round(value) + '</div>' +
         '<div class="forecast-strip" style="background:' + band.color + '"></div>';
 
@@ -708,28 +942,27 @@
     const seasonMsg = document.getElementById('wq-season');
 
     if (!isMonitoringSeason()) {
-      badge.className  = 'wq-badge';
-      badge.textContent = '—';
+      badge.className    = 'wq-badge';
+      badge.textContent  = '—';
       detail.textContent = '';
-      seasonMsg.hidden = false;
-      fallback.hidden  = true;
+      seasonMsg.hidden   = false;
+      fallback.hidden    = true;
       return;
     }
     seasonMsg.hidden = true;
 
     if (!wqData) {
-      badge.className  = 'wq-badge';
-      badge.textContent = '—';
+      badge.className    = 'wq-badge';
+      badge.textContent  = '—';
       detail.textContent = '';
-      fallback.hidden  = false;
+      fallback.hidden    = false;
       return;
     }
     fallback.hidden = true;
 
     const entry = WQ_MAP[wqData.classification] || ['good', wqData.classification || 'Nepoznato'];
-    badge.className  = 'wq-badge ' + entry[0];
-    badge.textContent = entry[1];
-
+    badge.className    = 'wq-badge ' + entry[0];
+    badge.textContent  = entry[1];
     detail.textContent = wqData.date
       ? 'Zadnje mjerenje: ' + wqData.date + ' · ' + wqData.name
       : wqData.name;
@@ -739,11 +972,11 @@
 
   function renderLastUpdate() {
     const now = new Date();
-    const h   = String(now.getHours()).padStart(2, '0');
-    const m   = String(now.getMinutes()).padStart(2, '0');
     const el  = document.getElementById('last-update');
-    el.className  = '';
-    el.textContent = 'Zadnje osvježavanje: ' + h + ':' + m;
+    el.className   = '';
+    el.textContent = 'Zadnje osvježavanje: '
+      + String(now.getHours()).padStart(2, '0') + ':'
+      + String(now.getMinutes()).padStart(2, '0');
   }
 
   // ── Notifications ────────────────────────────────────────────────────────────
@@ -762,17 +995,17 @@
     const btn    = document.getElementById('notif-btn');
 
     if (permission === 'granted') {
-      pill.className  = 'notif-pill on';
+      pill.className   = 'notif-pill on';
       pill.textContent = '● Omogućene';
       status.textContent = 'Dobit ćete obavijest kada UV indeks pređe 5 ili je kakvoća mora prihvatljiva/loša.';
       btn.hidden = true;
     } else if (permission === 'denied') {
-      pill.className  = 'notif-pill denied';
+      pill.className   = 'notif-pill denied';
       pill.textContent = '✕ Blokirane';
       status.textContent = 'Preglednik je blokirao obavijesti. Promijenite dozvole u postavkama preglednika.';
       btn.hidden = true;
     } else {
-      pill.className  = 'notif-pill off';
+      pill.className   = 'notif-pill off';
       pill.textContent = '○ Isključene';
       status.textContent = 'Omogućite obavijesti za upozorenja o visokom UV indeksu ili lošoj kakvoći mora.';
       btn.hidden = false;
@@ -788,7 +1021,6 @@
 
   function evaluateAlerts(uvValue, wqData) {
     if (Notification.permission !== 'granted') return;
-
     const lastAlert = parseInt(localStorage.getItem(LS_LAST_ALERT) || '0', 10);
     if (Date.now() - lastAlert < ALERT_COOLDOWN) return;
 
@@ -823,8 +1055,7 @@
         body: body,
         tag:  'kostrena-alert',
         icon: 'data:image/svg+xml,' + encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-          '<text y=".9em" font-size="90">☀️</text></svg>'
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">☀️</text></svg>'
         ),
       });
     } catch (e) {}
@@ -837,16 +1068,10 @@
     btn.disabled    = true;
     btn.textContent = '↻ Učitavanje...';
 
-    // UV data
-    var uvData = null;
-    try {
-      uvData = await fetchUVData();
-    } catch (e) {
-      document.getElementById('uv-error').hidden   = false;
-      document.getElementById('uv-content').hidden = true;
-      document.getElementById('card-hourly').style.display   = 'none';
-      document.getElementById('card-forecast').style.display = 'none';
-    }
+    const [uvData, marineData] = await Promise.all([
+      fetchUVData().catch(function() { return null; }),
+      fetchMarineData(),
+    ]);
 
     if (uvData) {
       document.getElementById('uv-error').hidden   = true;
@@ -856,9 +1081,16 @@
       currentUVValue = renderCurrentUV(uvData);
       renderHourlyChart(uvData.hourly);
       renderForecast(uvData.daily);
+    } else {
+      document.getElementById('uv-error').hidden   = false;
+      document.getElementById('uv-content').hidden = true;
+      document.getElementById('card-hourly').style.display   = 'none';
+      document.getElementById('card-forecast').style.display = 'none';
     }
 
-    // Water quality (season-gated)
+    renderWindSpeed(uvData);
+    renderSeaTemperature(marineData);
+
     if (isMonitoringSeason()) {
       currentWQData = await fetchWaterQuality();
     } else {
