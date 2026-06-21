@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kostrena — UV & Kakvoća mora</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #16213e;
+    --accent: #7c3aed;
+    --accent-light: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: #2d2d4e;
+
+    --uv-low:       #22c55e;
+    --uv-moderate:  #eab308;
+    --uv-high:      #f97316;
+    --uv-very-high: #ef4444;
+    --uv-extreme:   #a855f7;
+
+    --wq-excellent: #22c55e;
+    --wq-good:      #84cc16;
+    --wq-sufficient:#eab308;
+    --wq-poor:      #ef4444;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 28px 20px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ────────────────────────────────────────────────── */
+
+  header { margin-bottom: 28px; }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #38bdf8, var(--accent-light), #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  #last-update {
+    font-size: 0.72rem;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .icon-btn {
+    padding: 7px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+  .icon-btn:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── Grid ──────────────────────────────────────────────────── */
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .card-wide { grid-column: 1 / -1; }
+
+  .card-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ── UV Current card ───────────────────────────────────────── */
+
+  .uv-big {
+    font-size: 4.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: color 0.35s;
+  }
+
+  .uv-band-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    transition: color 0.35s;
+  }
+
+  .uv-scale-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right,
+      var(--uv-low) 0%,
+      var(--uv-moderate) 27%,
+      var(--uv-high) 54%,
+      var(--uv-very-high) 78%,
+      var(--uv-extreme) 100%
+    );
+    position: relative;
+    margin: 16px 0 6px;
+  }
+
+  .uv-scale-marker {
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 3px solid #fff;
+    transform: translate(-50%, -50%);
+    transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.35s;
+    box-shadow: 0 0 6px rgba(255,255,255,0.25);
+  }
+
+  .uv-scale-nums {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding: 0 1px;
+  }
+
+  .uv-advice {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.55;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+    transition: border-left-color 0.35s;
+  }
+
+  /* ── Water quality card ────────────────────────────────────── */
+
+  .wq-badge {
+    display: inline-block;
+    font-size: 1.45rem;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .wq-badge.excellent { background: rgba(34,197,94,0.12);  color: var(--wq-excellent); }
+  .wq-badge.good      { background: rgba(132,204,22,0.12); color: var(--wq-good); }
+  .wq-badge.sufficient{ background: rgba(234,179,8,0.12);  color: var(--wq-sufficient); }
+  .wq-badge.poor      { background: rgba(239,68,68,0.12);  color: var(--wq-poor); }
+
+  .wq-detail {
+    font-size: 0.73rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  .wq-fallback {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+  }
+
+  .wq-fallback a {
+    color: var(--accent-light);
+    text-decoration: none;
+  }
+
+  .wq-fallback a:hover { text-decoration: underline; }
+
+  /* ── Hourly chart ──────────────────────────────────────────── */
+
+  .chart-outer { overflow-x: auto; }
+
+  .chart-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 110px;
+    min-width: 420px;
+  }
+
+  .bar-wrap {
+    flex: 1;
+    min-width: 14px;
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    cursor: default;
+  }
+
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    min-height: 3px;
+    transition: opacity 0.3s;
+  }
+
+  .chart-labels {
+    display: flex;
+    gap: 3px;
+    min-width: 420px;
+    margin-top: 5px;
+  }
+
+  .chart-labels span {
+    flex: 1;
+    min-width: 14px;
+    text-align: center;
+    font-size: 0.54rem;
+    color: var(--muted);
+  }
+
+  /* ── Forecast ──────────────────────────────────────────────── */
+
+  .forecast-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .forecast-day {
+    flex: 1;
+    min-width: 80px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+
+  .forecast-dow {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .forecast-date {
+    font-size: 0.6rem;
+    color: var(--muted);
+    margin: 2px 0 8px;
+  }
+
+  .forecast-uv {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+
+  .forecast-strip {
+    height: 5px;
+    border-radius: 3px;
+    width: 100%;
+  }
+
+  /* ── Notifications card ────────────────────────────────────── */
+
+  .notif-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .notif-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .notif-pill.on     { background: rgba(34,197,94,0.12);  color: var(--wq-excellent); }
+  .notif-pill.off    { background: rgba(100,116,139,0.12); color: var(--muted); }
+  .notif-pill.denied { background: rgba(239,68,68,0.12);  color: var(--wq-poor); }
+
+  #notif-status {
+    font-size: 0.78rem;
+    color: var(--muted);
+    flex: 1;
+    min-width: 160px;
+    line-height: 1.5;
+  }
+
+  /* ── Shared states ─────────────────────────────────────────── */
+
+  .error-msg {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid #ef4444;
+  }
+
+  .loading-txt {
+    font-size: 0.82rem;
+    color: var(--muted);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+
+  footer {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  footer a { color: var(--muted); }
+
+  /* ── Responsive ────────────────────────────────────────────── */
+
+  @media (max-width: 580px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .card-wide { grid-column: 1; }
+    h1 { font-size: 1.6rem; }
+    .uv-big { font-size: 3.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kostrena</h1>
+  <p class="subtitle">UV Indeks &middot; Kakvo&cacute;a mora</p>
+  <div class="meta-bar">
+    <span id="last-update" class="loading-txt">U&269;itavanje podataka...</span>
+    <button id="refresh-btn" class="icon-btn">&#8635; Osvje&382;i</button>
+  </div>
+</header>
+
+<main class="dashboard">
+
+  <!-- UV Current -->
+  <section class="card" id="card-uv">
+    <div class="card-label">UV Indeks &middot; trenutno</div>
+    <div id="uv-content">
+      <div class="uv-big" id="uv-value">--</div>
+      <div class="uv-band-label" id="uv-band-label">U&269;itavanje...</div>
+      <div class="uv-scale-bar">
+        <div class="uv-scale-marker" id="uv-scale-marker" style="left:0%"></div>
+      </div>
+      <div class="uv-scale-nums">
+        <span>0</span><span>2</span><span>5</span><span>7</span><span>10</span><span>11+</span>
+      </div>
+      <div class="uv-advice" id="uv-advice">U&269;itavanje preporuka...</div>
+    </div>
+    <div id="uv-error" class="error-msg" hidden>Podaci o UV indeksu nedostupni. Provjerite internetsku vezu.</div>
+  </section>
+
+  <!-- Water Quality -->
+  <section class="card" id="card-water">
+    <div class="card-label">Kakvo&cacute;a mora &middot; Kostrena</div>
+    <div class="wq-badge" id="wq-badge">--</div>
+    <div class="wq-detail" id="wq-detail"></div>
+    <div id="wq-season" class="wq-detail" hidden>
+      Izvan sezone pra&cacute;enja (studeni &mdash; travanj).<br>
+      Monitoring se provodi od svibnja do listopada.
+    </div>
+    <div class="wq-fallback" id="wq-fallback" hidden>
+      Automatski dohvat podataka nije mogu&cacute; (CORS ograni&269;enje).<br>
+      <a href="https://vrtlac.izor.hr/kakvoca/" target="_blank" rel="noopener">Provjerite na IZOR portalu &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Hourly Chart -->
+  <section class="card card-wide" id="card-hourly">
+    <div class="card-label">UV danas &mdash; po satima</div>
+    <div class="chart-outer">
+      <div class="chart-container" id="chart-container">
+        <span class="loading-txt">U&269;itavanje...</span>
+      </div>
+      <div class="chart-labels" id="chart-labels"></div>
+    </div>
+  </section>
+
+  <!-- 7-Day Forecast -->
+  <section class="card card-wide" id="card-forecast">
+    <div class="card-label">Prognoza maks. UV &mdash; sljedećih 7 dana</div>
+    <div class="forecast-row" id="forecast-row">
+      <span class="loading-txt">U&269;itavanje...</span>
+    </div>
+  </section>
+
+  <!-- Notifications -->
+  <section class="card card-wide" id="card-notif">
+    <div class="card-label">Obavijesti</div>
+    <div class="notif-row">
+      <div id="notif-pill" class="notif-pill off">&#9675; Isklju&269;ene</div>
+      <p id="notif-status">Omogu&cacute;ite obavijesti za upozorenja o visokom UV indeksu ili lo&scaron;oj kakvo&cacute;i mora.</p>
+      <button id="notif-btn" class="icon-btn">Omogu&cacute;i obavijesti</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Podaci: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+  &middot; <a href="https://vrtlac.izor.hr/kakvoca/" target="_blank" rel="noopener">VRTLAC/IZOR</a>
+  &middot; WHO smjernice za UV za&scaron;titu
+</footer>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+
+  const LAT = 45.2997;
+  const LON = 14.4977;
+  const TZ  = 'Europe/Zagreb';
+
+  const UV_HIGH_THRESHOLD  = 5;
+  const REFRESH_INTERVAL   = 60 * 60 * 1000; // 60 min
+  const ALERT_COOLDOWN     = 55 * 60 * 1000; // 55 min
+  const LS_LAST_ALERT      = 'kostrena_last_alert';
+
+  const OPEN_METEO_URL =
+    'https://api.open-meteo.com/v1/forecast' +
+    '?latitude='   + LAT +
+    '&longitude='  + LON +
+    '&hourly=uv_index' +
+    '&daily=uv_index_max' +
+    '&timezone='   + encodeURIComponent(TZ) +
+    '&forecast_days=7';
+
+  const IZOR_URL =
+    'https://vrtlac.izor.hr/ords/kakvoca/kakvoca_detalji10?p_zup_id=6&p_jezik=eng';
+
+  const UV_BANDS = [
+    { max: 2,        label: 'Nizak',      color: '#22c55e', advice: 'Zaštita nije potrebna.' },
+    { max: 5,        label: 'Umjeren',    color: '#eab308', advice: 'Nosite šešir i kremu SPF 30+.' },
+    { max: 7,        label: 'Visok',      color: '#f97316', advice: 'Suncobran, majica, SPF 50+. Izbjegavajte izlazak između 10 i 16 h.' },
+    { max: 10,       label: 'Vrlo visok', color: '#ef4444', advice: 'Ostanite u sjeni. SPF 50+, pokrijte cijelo tijelo.' },
+    { max: Infinity, label: 'Ekstreman',  color: '#a855f7', advice: 'Ostanite unutra između 10 i 16 h!' },
+  ];
+
+  const WQ_MAP = {
+    'Izvrsna':     ['excellent', 'Izvrsna'],
+    'Excellent':   ['excellent', 'Izvrsna'],
+    'Dobra':       ['good',      'Dobra'],
+    'Good':        ['good',      'Dobra'],
+    'Prihvatljiva':['sufficient','Prihvatljiva'],
+    'Sufficient':  ['sufficient','Prihvatljiva'],
+    'Acceptable':  ['sufficient','Prihvatljiva'],
+    'Lošija':      ['poor',      'Loša'],
+    'Poor':        ['poor',      'Loša'],
+  };
+
+  const DAYS_HR   = ['Ned','Pon','Uto','Sri','Čet','Pet','Sub'];
+  const MONTHS_HR = ['sij','velj','ožu','tra','svi','lip','srp','kol','ruj','lis','stu','pro'];
+
+  // ── State ───────────────────────────────────────────────────────────────────
+
+  let currentUVValue = 0;
+  let currentWQData  = null;
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  function getUVBand(v) {
+    return UV_BANDS.find(b => v <= b.max) || UV_BANDS[UV_BANDS.length - 1];
+  }
+
+  function localDateStr() {
+    const d = new Date();
+    return d.getFullYear() + '-'
+      + String(d.getMonth() + 1).padStart(2, '0') + '-'
+      + String(d.getDate()).padStart(2, '0');
+  }
+
+  function isMonitoringSeason() {
+    const m = new Date().getMonth();
+    return m >= 4 && m <= 9;
+  }
+
+  function formatShortDate(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.getDate() + '. ' + MONTHS_HR[d.getMonth()];
+  }
+
+  // ── Fetch ───────────────────────────────────────────────────────────────────
+
+  async function fetchUVData() {
+    const resp = await fetch(OPEN_METEO_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp.json();
+  }
+
+  async function fetchWaterQuality() {
+    try {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(function() { ctrl.abort(); }, 8000);
+      const resp  = await fetch(IZOR_URL, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!resp.ok) return null;
+      const data  = await resp.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      const match = items.find(function(item) {
+        return Object.values(item).some(function(v) {
+          return typeof v === 'string' && v.toLowerCase().includes('kostrena');
+        });
+      });
+      if (!match) return null;
+
+      // Scan for likely field names
+      function pick(obj) {
+        for (var i = 1; i < arguments.length; i++) {
+          if (obj[arguments[i]] !== undefined) return obj[arguments[i]];
+        }
+        return null;
+      }
+
+      return {
+        name:           pick(match, 'NAZIV_KUPALISCA', 'NAZIV_KUPALIŠTA', 'NAZIV', 'naziv', 'NAME') || 'Kostrena',
+        classification: pick(match, 'KLASA', 'CLASS', 'klasa', 'QUALITY', 'quality'),
+        date:           pick(match, 'DATUM_UZORKOVANJA', 'DATUM_UZO', 'DATUM', 'datum', 'DATE'),
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ── Render: UV ──────────────────────────────────────────────────────────────
+
+  function renderCurrentUV(uvData) {
+    const today = localDateStr();
+    const now   = new Date();
+    const curH  = String(now.getHours()).padStart(2, '0');
+    const curKey = today + 'T' + curH + ':00';
+
+    const hourly = uvData.hourly;
+    let idx = hourly.time.indexOf(curKey);
+
+    if (idx === -1) {
+      // Fallback: latest past entry today
+      var best = -1;
+      for (var i = 0; i < hourly.time.length; i++) {
+        if (hourly.time[i].startsWith(today) && hourly.time[i] <= curKey) best = i;
+      }
+      idx = best >= 0 ? best : 0;
+    }
+
+    const value = hourly.uv_index[idx] != null ? hourly.uv_index[idx] : 0;
+    const band  = getUVBand(value);
+
+    document.getElementById('uv-value').textContent      = value.toFixed(1);
+    document.getElementById('uv-value').style.color      = band.color;
+    document.getElementById('uv-band-label').textContent = band.label;
+    document.getElementById('uv-band-label').style.color = band.color;
+    document.getElementById('uv-advice').textContent     = band.advice;
+    document.getElementById('uv-advice').style.borderLeftColor = band.color;
+
+    const pct = Math.min(Math.max((value / 11) * 100, 2), 98);
+    document.getElementById('uv-scale-marker').style.left        = pct + '%';
+    document.getElementById('uv-scale-marker').style.borderColor = band.color;
+
+    return value;
+  }
+
+  // ── Render: Hourly chart ─────────────────────────────────────────────────────
+
+  function renderHourlyChart(hourly) {
+    const today   = localDateStr();
+    const nowHour = new Date().getHours();
+
+    const todayData = [];
+    for (var i = 0; i < hourly.time.length; i++) {
+      if (hourly.time[i].startsWith(today)) {
+        todayData.push({ t: hourly.time[i], v: hourly.uv_index[i] != null ? hourly.uv_index[i] : 0 });
+      }
+    }
+    if (!todayData.length) return;
+
+    const maxUV     = Math.max.apply(null, todayData.map(function(d) { return d.v; }).concat([1]));
+    const maxHeight = 110; // matches CSS height
+
+    const container = document.getElementById('chart-container');
+    const labelsEl  = document.getElementById('chart-labels');
+    container.innerHTML = '';
+    labelsEl.innerHTML  = '';
+
+    todayData.forEach(function(item) {
+      const hour   = parseInt(item.t.slice(11, 13));
+      const isPast = hour < nowHour;
+      const isCur  = hour === nowHour;
+      const band   = getUVBand(item.v);
+      const barH   = Math.max((item.v / maxUV) * maxHeight, 3);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      wrap.title = String(hour).padStart(2, '0') + ':00 — UV ' + item.v.toFixed(1);
+
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height     = barH + 'px';
+      bar.style.background = isPast ? 'var(--border)' : band.color;
+      bar.style.opacity    = isCur  ? '1' : (isPast ? '0.45' : '0.85');
+      if (isCur) bar.style.boxShadow = '0 0 8px ' + band.color + '80';
+
+      wrap.appendChild(bar);
+      container.appendChild(wrap);
+
+      const lbl = document.createElement('span');
+      lbl.textContent = hour % 3 === 0 ? String(hour).padStart(2, '0') : '';
+      labelsEl.appendChild(lbl);
+    });
+  }
+
+  // ── Render: 7-day forecast ───────────────────────────────────────────────────
+
+  function renderForecast(daily) {
+    const row = document.getElementById('forecast-row');
+    row.innerHTML = '';
+
+    daily.time.forEach(function(dateStr, i) {
+      const value = daily.uv_index_max[i] != null ? daily.uv_index_max[i] : 0;
+      const band  = getUVBand(value);
+      const d     = new Date(dateStr + 'T12:00:00');
+      const isToday = i === 0;
+
+      const tile = document.createElement('div');
+      tile.className = 'forecast-day';
+      if (isToday) tile.style.borderColor = band.color;
+
+      tile.innerHTML =
+        '<div class="forecast-dow">' + (isToday ? 'Danas' : DAYS_HR[d.getDay()]) + '</div>' +
+        '<div class="forecast-date">' + formatShortDate(dateStr) + '</div>' +
+        '<div class="forecast-uv" style="color:' + band.color + '">' + Math.round(value) + '</div>' +
+        '<div class="forecast-strip" style="background:' + band.color + '"></div>';
+
+      row.appendChild(tile);
+    });
+  }
+
+  // ── Render: Water quality ────────────────────────────────────────────────────
+
+  function renderWaterQuality(wqData) {
+    const badge     = document.getElementById('wq-badge');
+    const detail    = document.getElementById('wq-detail');
+    const fallback  = document.getElementById('wq-fallback');
+    const seasonMsg = document.getElementById('wq-season');
+
+    if (!isMonitoringSeason()) {
+      badge.className  = 'wq-badge';
+      badge.textContent = '—';
+      detail.textContent = '';
+      seasonMsg.hidden = false;
+      fallback.hidden  = true;
+      return;
+    }
+    seasonMsg.hidden = true;
+
+    if (!wqData) {
+      badge.className  = 'wq-badge';
+      badge.textContent = '—';
+      detail.textContent = '';
+      fallback.hidden  = false;
+      return;
+    }
+    fallback.hidden = true;
+
+    const entry = WQ_MAP[wqData.classification] || ['good', wqData.classification || 'Nepoznato'];
+    badge.className  = 'wq-badge ' + entry[0];
+    badge.textContent = entry[1];
+
+    detail.textContent = wqData.date
+      ? 'Zadnje mjerenje: ' + wqData.date + ' · ' + wqData.name
+      : wqData.name;
+  }
+
+  // ── Render: Timestamp ────────────────────────────────────────────────────────
+
+  function renderLastUpdate() {
+    const now = new Date();
+    const h   = String(now.getHours()).padStart(2, '0');
+    const m   = String(now.getMinutes()).padStart(2, '0');
+    const el  = document.getElementById('last-update');
+    el.className  = '';
+    el.textContent = 'Zadnje osvježavanje: ' + h + ':' + m;
+  }
+
+  // ── Notifications ────────────────────────────────────────────────────────────
+
+  function initNotifications() {
+    if (!('Notification' in window)) {
+      document.getElementById('card-notif').hidden = true;
+      return;
+    }
+    updateNotifUI(Notification.permission);
+  }
+
+  function updateNotifUI(permission) {
+    const pill   = document.getElementById('notif-pill');
+    const status = document.getElementById('notif-status');
+    const btn    = document.getElementById('notif-btn');
+
+    if (permission === 'granted') {
+      pill.className  = 'notif-pill on';
+      pill.textContent = '● Omogućene';
+      status.textContent = 'Dobit ćete obavijest kada UV indeks pređe 5 ili je kakvoća mora prihvatljiva/loša.';
+      btn.hidden = true;
+    } else if (permission === 'denied') {
+      pill.className  = 'notif-pill denied';
+      pill.textContent = '✕ Blokirane';
+      status.textContent = 'Preglednik je blokirao obavijesti. Promijenite dozvole u postavkama preglednika.';
+      btn.hidden = true;
+    } else {
+      pill.className  = 'notif-pill off';
+      pill.textContent = '○ Isključene';
+      status.textContent = 'Omogućite obavijesti za upozorenja o visokom UV indeksu ili lošoj kakvoći mora.';
+      btn.hidden = false;
+    }
+  }
+
+  function requestNotificationPermission() {
+    Notification.requestPermission().then(function(perm) {
+      updateNotifUI(perm);
+      if (perm === 'granted') evaluateAlerts(currentUVValue, currentWQData);
+    });
+  }
+
+  function evaluateAlerts(uvValue, wqData) {
+    if (Notification.permission !== 'granted') return;
+
+    const lastAlert = parseInt(localStorage.getItem(LS_LAST_ALERT) || '0', 10);
+    if (Date.now() - lastAlert < ALERT_COOLDOWN) return;
+
+    var sent = false;
+
+    if (uvValue > UV_HIGH_THRESHOLD) {
+      const band = getUVBand(uvValue);
+      sendNotification(
+        'UV upozorenje — ' + band.label,
+        'UV indeks u Kostreni: ' + uvValue.toFixed(1) + '. ' + band.advice
+      );
+      sent = true;
+    }
+
+    if (wqData && wqData.classification) {
+      const poorKeys = ['Lošija', 'Poor', 'Prihvatljiva', 'Sufficient', 'Acceptable'];
+      if (poorKeys.indexOf(wqData.classification) !== -1) {
+        sendNotification(
+          'Kakvoća mora — ' + (WQ_MAP[wqData.classification] ? WQ_MAP[wqData.classification][1] : wqData.classification),
+          'Kakvoća mora u ' + (wqData.name || 'Kostreni') + ': ' + wqData.classification + '. Budite oprezni pri kupanju.'
+        );
+        sent = true;
+      }
+    }
+
+    if (sent) localStorage.setItem(LS_LAST_ALERT, String(Date.now()));
+  }
+
+  function sendNotification(title, body) {
+    try {
+      new Notification(title, {
+        body: body,
+        tag:  'kostrena-alert',
+        icon: 'data:image/svg+xml,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+          '<text y=".9em" font-size="90">☀️</text></svg>'
+        ),
+      });
+    } catch (e) {}
+  }
+
+  // ── Main load ────────────────────────────────────────────────────────────────
+
+  async function loadAllData() {
+    const btn = document.getElementById('refresh-btn');
+    btn.disabled    = true;
+    btn.textContent = '↻ Učitavanje...';
+
+    // UV data
+    var uvData = null;
+    try {
+      uvData = await fetchUVData();
+    } catch (e) {
+      document.getElementById('uv-error').hidden   = false;
+      document.getElementById('uv-content').hidden = true;
+      document.getElementById('card-hourly').style.display   = 'none';
+      document.getElementById('card-forecast').style.display = 'none';
+    }
+
+    if (uvData) {
+      document.getElementById('uv-error').hidden   = true;
+      document.getElementById('uv-content').hidden = false;
+      document.getElementById('card-hourly').style.display   = '';
+      document.getElementById('card-forecast').style.display = '';
+      currentUVValue = renderCurrentUV(uvData);
+      renderHourlyChart(uvData.hourly);
+      renderForecast(uvData.daily);
+    }
+
+    // Water quality (season-gated)
+    if (isMonitoringSeason()) {
+      currentWQData = await fetchWaterQuality();
+    } else {
+      currentWQData = null;
+    }
+    renderWaterQuality(currentWQData);
+
+    renderLastUpdate();
+    evaluateAlerts(currentUVValue, currentWQData);
+
+    btn.disabled    = false;
+    btn.textContent = '↻ Osvježi';
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+
+  function init() {
+    initNotifications();
+    loadAllData();
+    setInterval(loadAllData, REFRESH_INTERVAL);
+    document.getElementById('refresh-btn').addEventListener('click', loadAllData);
+    document.getElementById('notif-btn').addEventListener('click', requestNotificationPermission);
+  }
+
+  init();
+</script>
+</body>
+</html>
